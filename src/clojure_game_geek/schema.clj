@@ -65,6 +65,6 @@
                  (assoc this :schema nil)))
 
 
-(defn new-schema-SchemaProvider
+(defn new-schema-provider
   []
   {:schema-provider (map->SchemaProvider {})})
