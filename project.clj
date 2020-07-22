@@ -6,5 +6,6 @@
   ;:plugins [[cider/cider-nrepl "0.24.0"]]
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [com.walmartlabs/lacinia-pedestal "0.14.0"]
-                 [io.aviso/logging "0.2.0"]])
+                 [io.aviso/logging "0.2.0"]
+                 [com.stuartsierra/component "1.0.0"]])
   ;:repl-options {:init-ns clojure-game-geek.core})

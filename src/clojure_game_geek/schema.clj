@@ -1,10 +1,10 @@
 (ns clojure-game-geek.schema
   "Contains custom resolvers and a function to provide the full schema."
-  (:require
-    [clojure.java.io :as io]
-    [com.walmartlabs.lacinia.util :as util]
-    [com.walmartlabs.lacinia.schema :as schema]
-    [clojure.edn :as edn]))
+  (:require [clojure.java.io :as io]
+            [com.walmartlabs.lacinia.util :as util]
+            [com.walmartlabs.lacinia.schema :as schema]
+            [clojure.edn :as edn]
+            [com.stuartsierra.component :as component]))
 
 
 (defn resolve-game-by-id
@@ -36,7 +36,7 @@
 
 
 (defn resolver-map
-  []
+  [component]
   (let [cgg-data (-> (io/resource "cgg-data.edn")
                      slurp
                      edn/read-string)
@@ -48,9 +48,23 @@
 
 
 (defn load-schema
-  []
+  [component]
   (-> (io/resource "cgg-schema.edn")
       slurp
       edn/read-string
-      (util/attach-resolvers (resolver-map))
+      (util/attach-resolvers (resolver-map component))
       schema/compile))
+
+
+(defrecord SchemaProvider [schema]
+           component/Lifecycle
+           (start [this]
+                  (assoc this :schema (load-schema this)))
+
+           (stop [this]
+                 (assoc this :schema nil)))
+
+
+(defn new-schema-SchemaProvider
+  []
+  {:schema-provider (map->SchemaProvider {})})
