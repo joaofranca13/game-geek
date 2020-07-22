@@ -22,7 +22,7 @@
    :min_players 2
    :max_players 2
    :designers #{"201" "202"}}]
- 
+
  :designers
  [{:id "200"
    :name "Kris Burm"
