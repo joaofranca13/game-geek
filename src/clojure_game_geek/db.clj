@@ -1,20 +1,29 @@
 (ns clojure-game-geek.db
   (:require
-    [clojure.edn :as edn]
-    [clojure.java.io :as io]
-    [com.stuartsierra.component :as component]))
+    [com.stuartsierra.component :as component]
+    [clojure.java.jdbc :as jdbc])
+  (:import (com.mchange.v2.c3p0 ComboPooledDataSource)))
 
+(defn ^:private pooled-data-source
+  [host dbname user password port]
+  {:datasource
+   (doto (ComboPooledDataSource.)
+     (.setDriverClass "org.postgresql.Driver" )
+     (.setJdbcUrl (str "jdbc:postgresql://" host ":" port "/" dbname))
+     (.setUser user)
+     (.setPassword password))})
 
-(defrecord ClojureGameGeekDb [data]
-           component/Lifecycle
-           (start [this]
-                  (assoc this :data (-> (io/resource "cgg-data.edn")
-                                        slurp
-                                        edn/read-string
-                                        atom)))
-           (stop [this]
-                 (assoc this :data nil)))
+(defrecord ClojureGameGeekDb [ds]
 
+  component/Lifecycle
+
+  (start [this]
+    (assoc this
+           :ds (pooled-data-source "localhost" "cggdb" "cgg_role" "lacinia" 25432)))
+
+  (stop [this]
+    (-> ds :datasource .close)
+    (assoc this :ds nil)))
 
 (defn new-db
   []
@@ -22,62 +31,53 @@
 
 
 (defn find-game-by-id
-  [db game-id]
-  (->> db
-       :data
-       deref
-       :games
-       (filter #(= game-id (:id %)))
-       first))
-
+  [component game-id]
+  (first
+    (jdbc/query (:ds component)
+                ["select game_id, name, summary, min_players, max_players, created_at, updated_at
+               from board_game where game_id = ?" game-id])))
 
 (defn find-member-by-id
-  [db member-id]
-  (->> db
-       :data
+  [component member-id]
+  (->> component
+       :db
        deref
        :members
        (filter #(= member-id (:id %)))
        first))
 
-
-(defn list-designers-for-games
-  [db game-id]
-  (let [designers (:designers (find-game-by-id db game-id))]
-    (->> db
-         :data
+(defn list-designers-for-game
+  [component game-id]
+  (let [designers (:designers (find-game-by-id component game-id))]
+    (->> component
+         :db
          deref
          :designers
          (filter #(contains? designers (:id %))))))
 
-
- (defn list-games-for-designers
-   [db designer-id]
-   (->> db
-        :data
-        deref
-        :games
-        (filter #(-> %
-                     :designers
-                     (contains? designer-id)))))
+(defn list-games-for-designer
+  [component designer-id]
+  (->> component
+       :db
+       deref
+       :games
+       (filter #(-> % :designers (contains? designer-id)))))
 
 (defn list-ratings-for-game
-  [db game-id]
-  (->> db
-       :data
+  [component game-id]
+  (->> component
+       :db
        deref
        :ratings
        (filter #(= game-id (:game_id %)))))
 
-
 (defn list-ratings-for-member
-  [db member-id]
-  (->> db
-       :data
+  [component member-id]
+  (->> component
+       :db
        deref
        :ratings
        (filter #(= member-id (:member_id %)))))
-
 
 (defn ^:private apply-game-rating
   [game-ratings game-id member-id rating]
@@ -88,10 +88,9 @@
               :member_id member-id
               :rating rating})))
 
-
 (defn upsert-game-rating
   "Adds a new game rating, or changes the value of an existing game rating."
   [db game-id member-id rating]
   (-> db
-      :data
+      :db
       (swap! update :ratings apply-game-rating game-id member-id rating)))

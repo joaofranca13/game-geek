@@ -48,13 +48,13 @@
 (defn board-game-designers
   [db]
   (fn [_ _ board-game]
-    (db/list-designers-for-games db (:id board-game))))
+    (db/list-designers-for-game db (:id board-game))))
 
 
 (defn designer-games
   [db]
   (fn [_ _ designer]
-    (db/list-games-for-designers db (:id designer))))
+    (db/list-games-for-designer db (:id designer))))
 
 
 (defn rating-summary
