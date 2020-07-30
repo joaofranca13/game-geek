@@ -1,8 +1,8 @@
 (ns clojure-game-geek.db
-  (:require
-    [com.stuartsierra.component :as component]
-    [clojure.java.jdbc :as jdbc])
+  (:require [com.stuartsierra.component :as component]
+            [clojure.java.jdbc :as jdbc])
   (:import (com.mchange.v2.c3p0 ComboPooledDataSource)))
+
 
 (defn ^:private pooled-data-source
   [host dbname user password port]
@@ -13,13 +13,14 @@
      (.setUser user)
      (.setPassword password))})
 
+
 (defrecord ClojureGameGeekDb [ds]
 
   component/Lifecycle
 
   (start [this]
     (assoc this
-           :ds (pooled-data-source "localhost" "cggdb" "cgg_role" "lacinia" 25432)))
+           :ds (pooled-data-source "localhost" "clj_game_geek_db" "postgres" "postgres" 5432)))
 
   (stop [this]
     (-> ds :datasource .close)
@@ -30,12 +31,14 @@
   {:db (map->ClojureGameGeekDb {})})
 
 
+
 (defn find-game-by-id
   [component game-id]
   (first
     (jdbc/query (:ds component)
                 ["select game_id, name, summary, min_players, max_players, created_at, updated_at
                from board_game where game_id = ?" game-id])))
+
 
 (defn find-member-by-id
   [component member-id]
