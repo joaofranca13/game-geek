@@ -22,7 +22,7 @@
                  m))
 
 
-(defonce system (system/new-system))
+(defonce system nil)
 
 (defn q
   [query-string]
@@ -35,12 +35,16 @@
 
 (defn start
   []
-  (alter-var-root #'system component/start-system)
+  (alter-var-root #'system (fn [_]
+                             (-> (system/new-system)
+                                 component/start-system)))
   (browse-url "http://localhost:8888/")
   :started)
 
 
 (defn stop
   []
-  (alter-var-root #'system component/stop-system)
+  (when (some? system)
+    (component/stop-system system)
+    (alter-var-root #'system (constantly nil)))
   :stopped)
