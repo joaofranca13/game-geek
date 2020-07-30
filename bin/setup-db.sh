@@ -1,15 +1,5 @@
 #!/usr/bin/env bash
-
-
-docker start 79816ce3bad0b62d94569b98499e229c199f9119d0b411439a7eaf6b0809ebf8
-
-docker exec -i --user postgres cgg_db_1 createdb cggdb
-
-docker exec -i --user postgres cgg_db_1 psql cggdb -a  <<__END
-create user cgg_role password 'lacinia';
-__END
-
-docker exec -i cgg_db_1 psql -Ucgg_role cggdb -a <<__END
+docker exec -i clj_game_geek psql -U postgres clj_game_geek_db -a <<__END
 drop table if exists designer_to_game;
 drop table if exists game_rating;
 drop table if exists member;
