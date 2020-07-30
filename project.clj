@@ -10,5 +10,7 @@
                  [org.postgresql/postgresql "42.2.2"]
                  [com.layerware/hugsql "0.5.1"]
                  [io.aviso/logging "0.3.2"]
+                 [org.clojure/java.jdbc "0.7.11"]
+                 [com.mchange/c3p0 "0.9.5.5"]
                  [com.stuartsierra/component "1.0.0"]])
   ;:repl-options {:init-ns clojure-game-geek.core})
